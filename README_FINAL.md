@@ -5,6 +5,12 @@ SiteGuard Vision is a computer vision solution built with **Ultralytics YOLO** t
 
 The system detects workers and personal protective equipment (PPE), analyzes video streams, tracks detected objects, and supports safety-oriented monitoring such as PPE compliance and restricted-zone awareness.
 
+
+## Training program attribution
+This capstone was created for the **Computer Vision for Developers with Ultralytics** training program delivered by **SDAIA Academy** via **Learning Space** as a 5-day capstone program.
+
+SDAIA Academy on GitHub: **https://github.com/SDAIAAcademy**
+
 ---
 
 ## Project Overview
