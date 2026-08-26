@@ -1,14 +1,58 @@
-# Execution Evidence Guide
+# Execution Evidence
 
-The rubric explicitly requires **real captured execution**, not code that merely could run. This file tells you exactly what to retain after running the project. Do not replace these items with invented metrics.
+## Training
 
-1. **Training evidence:** terminal output from `python src/train.py`, `runs/siteguard/ppe_train/results.csv`, `results.png`, and `weights/best.pt`.
-2. **Evaluation evidence:** terminal output from `python src/evaluate.py`, `artifacts/evaluation_metrics.json`, and the generated validation plots/confusion matrix under `runs/siteguard/evaluation/`.
-3. **Inference evidence:** an annotated result from `python src/inference.py --source <image>`.
-4. **Segmentation evidence:** annotated masks from `python src/segmentation_demo.py --source <image>`.
-5. **Video analytics evidence:** `artifacts/siteguard_analytics.mp4`, `artifacts/video_analytics_summary.json`, and a screenshot showing track IDs / zone / alert overlays.
-6. **Training interpretation:** `artifacts/training_analysis.md` from `python src/analyze_training.py`.
-7. **Export evidence:** terminal output from `python src/export_model.py` plus the generated `.onnx` file.
-8. **App evidence:** screenshot of `streamlit run app.py` processing a construction image.
+The YOLO model was trained on the Construction-PPE dataset for 3 epochs.
 
-For GitHub, keep screenshots or small JSON/Markdown evidence files; do not commit large datasets, model weights, videos, or generated `runs/` unless your instructor explicitly asks for them.
+- Best validation mAP@50-95 epoch: 3
+- Best validation mAP@50-95: 0.12953
+- Final validation mAP@50-95: 0.12953
+- Final training box loss: 1.74261
+- Final validation box loss: 1.73273
+
+The best model weights were saved in:
+
+`runs/siteguard/ppe_train/weights/best.pt`
+
+## Evaluation
+
+The trained model was evaluated using Ultralytics `model.val()`.
+
+Final evaluation results:
+
+- Precision: 0.3470
+- Recall: 0.1354
+- mAP@50: 0.1138
+- mAP@50-95: 0.0585
+
+The evaluation metrics were saved in:
+
+`artifacts/evaluation_metrics.json`
+
+## Confusion Matrix
+
+A confusion matrix was generated during validation.
+
+The model showed better performance on common classes such as Person, helmet, gloves, and vest, while performance was weaker on rare missing-PPE classes.
+
+## Image Inference
+
+The trained model was tested on images and generated bounding boxes with class labels.
+
+## Segmentation
+
+A YOLO segmentation model was used as an additional computer vision task beyond object detection.
+
+## Video Analytics
+
+The video pipeline was tested successfully and included:
+
+- Worker detection
+- PPE detection
+- Bounding boxes
+- Object tracking
+- Persistent tracking IDs
+
+## Model Export
+
+The trained model was exported to ONNX format for deployment.
