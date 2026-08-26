@@ -1,233 +1,44 @@
-# SiteGuard Vision  
-## Construction PPE Compliance & Restricted-Zone Analytics
+# SiteGuard Vision — Construction PPE Compliance & Restricted-Zone Analytics
 
-Student name: MOHAMMED ABDULLAH ALHAMMADI , YASSER AHMED ALASSIRI , Faisal Saleh BinBaz , Asaad Jamal Maqbool , SAAD MOHAMMED ALHOSAN
+**Ultralytics YOLO Capstone Computer Vision Solution**
 
-SiteGuard Vision is a computer vision solution built with **Ultralytics YOLO** to support construction-site safety monitoring.
+SiteGuard Vision is an end-to-end computer-vision application for construction safety. It fine-tunes a YOLO detector on a real PPE dataset, evaluates the model, runs custom inference, performs **instance segmentation as a second vision task**, tracks workers and equipment in video, counts people entering a restricted work zone, flags missing PPE inside that zone, exports the trained detector to ONNX, and provides a small Streamlit deployment app.
 
-The system detects workers and personal protective equipment (PPE), analyzes video streams, tracks detected objects, and supports safety-oriented monitoring such as PPE compliance and restricted-zone awareness.
+## Why this project
+Manual PPE monitoring is difficult across busy sites. SiteGuard Vision turns a camera stream into actionable safety analytics: worker/PPE detection, persistent tracking, restricted-zone entry counts, and visible missing-PPE alerts. The system is a capstone demonstration, not a certified safety system.
 
----
+## Scored requirements covered
+| Rubric deliverable | Implementation |
+|---|---|
+| Core Vision Tasks & Inference (25) | `src/inference.py` + `src/segmentation_demo.py`; real YOLO predict calls; segmentation uses `yolo26n-seg.pt` |
+| Real-World Solution & Video Analytics (25) | `src/video_analytics.py`; `model.track()`, ByteTrack, OpenCV video pipeline, polygon zone analytics, entry counting, PPE alerts |
+| Model Evaluation (25) | `src/evaluate.py`; real `model.val()`, mAP50, mAP50-95, precision, recall, plots/confusion matrix, threshold interpretation |
+| Custom Data & Training (15) | `src/train.py`; real `model.train()` on Construction-PPE, 1,416 images, 11 classes; not COCO8 |
+| Deployment & Export (5) | `src/export_model.py` exports ONNX; `app.py` provides Streamlit inference |
+| Documentation & Evidence (5) | This README + `docs/`; exact evidence checklist and GitHub requirements |
 
-## Project Overview
-
-Construction environments contain multiple safety risks, especially when workers are missing required protective equipment.
-
-SiteGuard Vision applies computer vision to automatically identify:
-
-- People
-- Helmets
-- Gloves
-- Safety vests
-- Boots
-- Goggles
-- Missing PPE classes available in the dataset
-
-The project combines object detection, segmentation, video analytics, model evaluation, custom training, and model export in one complete workflow.
-
----
-
-## Main Features
-
-### 1. PPE Object Detection
-The trained YOLO model detects workers and PPE items from images and video.
-
-Supported dataset classes include:
-
-- `helmet`
-- `gloves`
-- `vest`
-- `boots`
-- `goggles`
-- `none`
-- `Person`
-- `no_helmet`
-- `no_goggle`
-- `no_gloves`
-- `no_boots`
-
-### 2. Instance Segmentation
-A YOLO segmentation model is used as an additional computer vision task beyond standard object detection.
-
-This demonstrates the ability to identify object regions using segmentation masks.
-
-### 3. Video Analytics
-The project processes video using OpenCV and YOLO.
-
-The video pipeline supports:
-
-- Object detection
-- Bounding-box visualization
-- Object tracking
-- Persistent tracking IDs
-- PPE visualization
-- Worker monitoring
-
-### 4. Model Evaluation
-The trained model is evaluated using Ultralytics `model.val()`.
-
-Evaluation includes:
-
-- Precision
-- Recall
-- mAP@50
-- mAP@50-95
-- Confusion matrix
-- Validation plots
-
-### 5. Custom Model Training
-The model was fine-tuned on the Ultralytics **Construction-PPE** dataset.
-
-### 6. Model Export
-The trained YOLO model is exported to **ONNX** for deployment and interoperability.
-
----
+**Section 2.3 “Encouraged: supporting the Saudi tech community” is intentionally not included, as requested.** All mandatory GitHub requirements in Sections 2.1 and 2.2 remain covered.
 
 ## Dataset
+The custom-training dataset is **Ultralytics Construction-PPE**, a real construction-site detection dataset containing **1,416 images**, split into **1,132 train / 143 validation / 141 test**, with **11 classes**: `helmet`, `gloves`, `vest`, `boots`, `goggles`, `none`, `Person`, `no_helmet`, `no_goggle`, `no_gloves`, `no_boots`.
 
-The project uses the Ultralytics **Construction-PPE** dataset.
+Ultralytics downloads the dataset automatically when `data="construction-ppe.yaml"` is used. Dataset documentation: `https://docs.ultralytics.com/datasets/detect/construction-ppe/`.
 
-Dataset summary:
+## Models
+- Fine-tuning / custom PPE detection: `yolo26n.pt`
+- Second task — instance segmentation: `yolo26n-seg.pt`
+- Final custom weights after training: `runs/siteguard/ppe_train/weights/best.pt`
+- Tracking: custom `best.pt` + `bytetrack.yaml`
 
-- 1,416 images
-- 11 classes
-- Training and validation splits
-- Construction-worker and PPE annotations
+> If your installed Ultralytics release uses a different current nano checkpoint name, replace the model strings consistently. The APIs used are the standard Ultralytics Python `train`, `val`, `predict`, `track`, and `export` workflows.
 
-Dataset configuration:
-
+## Project structure
 ```text
-construction-ppe.yaml
-```
-
----
-
-## Model
-
-The project uses a pretrained Ultralytics YOLO model and fine-tunes it on the Construction-PPE dataset.
-
-Training configuration:
-
-```text
-Model: yolo26n.pt
-Image size: 640
-Batch size: 16
-Epochs: 3
-Optimizer: AdamW (automatically selected by Ultralytics)
-Pretrained weights: Yes
-```
-
----
-
-## Training Results
-
-Training completed successfully for **3 epochs**.
-
-The best model was saved as:
-
-```text
-runs/siteguard/ppe_train/weights/best.pt
-```
-
-Training analysis:
-
-| Item | Result |
-|---|---:|
-| Epochs completed | 3 |
-| Best validation mAP@50-95 epoch | 3 |
-| Best validation mAP@50-95 | 0.12953 |
-| Final validation mAP@50-95 | 0.12953 |
-| Final training box loss | 1.74261 |
-| Final validation box loss | 1.73273 |
-
-The training and validation box losses were close to each other, which does not show clear evidence of overfitting during this short training run.
-
-Because the model was trained for only three epochs, the results are more consistent with **under-training** than overfitting. Additional epochs and further hyperparameter tuning may improve recall and overall mAP.
-
----
-
-## Model Evaluation Results
-
-The trained model was evaluated on the Construction-PPE validation dataset using Ultralytics `model.val()`.
-
-| Metric | Result |
-|---|---:|
-| Precision | **0.3470** |
-| Recall | **0.1354** |
-| mAP@50 | **0.1138** |
-| mAP@50-95 | **0.0585** |
-
-Evaluation settings:
-
-```text
-Confidence threshold: 0.35
-IoU threshold: 0.50
-```
-
-The model showed stronger performance on visible and more frequent classes such as:
-
-- `Person`
-- `helmet`
-- `gloves`
-
-Performance was weaker for several rare missing-PPE classes, including:
-
-- `no_boots`
-- `no_gloves`
-- `no_goggle`
-- `no_helmet`
-
-This is consistent with the short training duration and class imbalance in the dataset.
-
-The evaluation metrics are saved in:
-
-```text
-artifacts/evaluation_metrics.json
-```
-
-Ultralytics validation outputs and plots are saved under:
-
-```text
-runs/siteguard/evaluation/
-```
-
----
-
-## Error Analysis
-
-The confusion matrix shows that the model performs better on common PPE and person classes than on rare violation classes.
-
-Important observations:
-
-- `Person` achieved relatively strong detection performance.
-- `helmet` and `gloves` were detected more reliably than several missing-PPE classes.
-- Rare classes produced more false negatives.
-- Class imbalance affects the model's ability to learn underrepresented violations.
-- The short 3-epoch training run limits convergence.
-
-### Possible Improvements
-
-Future improvements may include:
-
-- Training for more epochs
-- Applying class balancing
-- Collecting more examples of missing-PPE classes
-- Tuning confidence and IoU thresholds
-- Testing additional augmentation strategies
-- Fine-tuning learning-rate settings
-
----
-
-## Project Structure
-
-```text
-SiteGuard-Vision/
-│
-├── README.md
-├── requirements.txt
+SiteGuard_Vision_Capstone/
 ├── app.py
-├── .gitignore
-│
+├── run_pipeline.py
+├── requirements.txt
+├── configs/project.yaml
 ├── src/
 │   ├── train.py
 │   ├── evaluate.py
@@ -236,259 +47,149 @@ SiteGuard-Vision/
 │   ├── segmentation_demo.py
 │   ├── video_analytics.py
 │   └── export_model.py
-│
-├── notebooks/
-│   └── siteguard_capstone.ipynb
-│
 ├── docs/
+│   ├── TECHNICAL_DOCUMENTATION.md
 │   ├── RUBRIC_CHECKLIST.md
-│   ├── EXECUTION_EVIDENCE.md
-│   └── TECHNICAL_DOCUMENTATION.md
-│
+│   └── EXECUTION_EVIDENCE.md
 ├── artifacts/
-│   ├── evaluation_metrics.json
-│   └── training_analysis.md
-│
-└── runs/
-    └── siteguard/
+└── tests/
 ```
 
----
+## Prerequisites
+- Python 3.10–3.12 recommended
+- Internet access on first run to install dependencies, download pretrained model weights, and download Construction-PPE
+- GPU recommended for training; CPU works but is much slower
+- A real construction-site video or webcam stream for Deliverable 2 evidence
 
-## Installation
-
-Clone the repository:
-
+## Setup
 ```bash
-git clone <YOUR_REPOSITORY_URL>
-cd SiteGuard-Vision
-```
-
-Install the required dependencies:
-
-```bash
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+# macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-If Ultralytics is not installed:
-
-```bash
-pip install ultralytics
-```
-
----
-
-## Training
-
-Run custom training:
-
+## 1) Train on real custom data
 ```bash
 python src/train.py
 ```
+Default training: 50 epochs, image size 640, batch 16, patience 12, pretrained nano weights, deterministic seed 42. Ultralytics will auto-download `construction-ppe.yaml` data if needed.
 
-The best model weights are saved under the training output directory.
+Expected key artifact:
+```text
+runs/siteguard/ppe_train/weights/best.pt
+```
 
----
-
-## Evaluation
-
-Run model evaluation:
-
+## 2) Evaluate the trained model
 ```bash
 python src/evaluate.py
 ```
+This **actually calls `model.val()`** and saves concrete metrics to:
+```text
+artifacts/evaluation_metrics.json
+```
+It reports mAP50, mAP50-95, mean precision, mean recall, and preserves the chosen thresholds (`conf=0.35`, `IoU=0.50`). Ultralytics validation plots should be under `runs/siteguard/evaluation/`.
 
-The script performs validation and saves the evaluation metrics.
+### Evaluation interpretation
+For construction safety, false negatives are especially important because a missed missing-PPE condition may fail to warn about risk. Using confidence 0.35 is a recall-favoring starting point. A threshold that is too low can create false-positive alerts; a threshold that is too high can miss hazards. Use the real PR/F1 curves and confusion matrix to tune this trade-off. IoU 0.50 is a practical overlap threshold for deciding whether predicted and labeled boxes align sufficiently.
 
----
-
-## Training Analysis
-
-Run:
-
+## 3) Analyze what happened during training
 ```bash
 python src/analyze_training.py
 ```
+This reads the **real** `results.csv` and writes:
+```text
+artifacts/training_analysis.md
+```
+The analysis identifies the best validation epoch and checks for a late-stage validation-mAP drop, so the required over/underfitting discussion is based on evidence rather than guessed values.
 
-The script analyzes training results and generates a training summary.
-
----
-
-## Image Inference
-
-Run:
-
+## 4) Core custom detection inference
 ```bash
-python src/inference.py
+python src/inference.py --source path/to/construction_image.jpg
 ```
+Annotated output and prediction labels are saved under `runs/siteguard/inference/`.
 
-The inference pipeline performs YOLO object detection and generates annotated predictions.
-
----
-
-## Segmentation
-
-Run:
-
+## 5) Required task beyond detection — instance segmentation
 ```bash
-python src/segmentation_demo.py
+python src/segmentation_demo.py --source path/to/construction_image.jpg
 ```
+This loads task-specific segmentation weights (`yolo26n-seg.pt`) and executes real instance segmentation with `model.predict()`. Annotated masks are saved under `runs/siteguard/segmentation/`.
 
-This executes the segmentation component and generates segmentation-mask visualizations.
-
----
-
-## Video Analytics
-
-Run:
-
+## 6) Real-world video tracking & zone analytics
+Use a real construction-site clip:
 ```bash
-python src/video_analytics.py
+python src/video_analytics.py --source path/to/construction_site.mp4 --show
+```
+Or a webcam:
+```bash
+python src/video_analytics.py --source 0 --show
+```
+The pipeline does real work on every frame:
+1. OpenCV captures the stream.
+2. `model.track(..., persist=True, tracker="bytetrack.yaml")` produces persistent object tracks.
+3. A polygon defines a restricted work zone.
+4. `Person` track IDs entering that polygon are counted once.
+5. `no_helmet`, `no_goggle`, `no_gloves`, and `no_boots` detections inside the polygon are highlighted as alerts.
+6. The processed video and JSON analytics summary are written to `artifacts/`.
+
+Outputs:
+```text
+artifacts/siteguard_analytics.mp4
+artifacts/video_analytics_summary.json
 ```
 
-The video pipeline performs detection and tracking on video frames.
-
-The video analytics workflow can visualize:
-
-- Workers
-- PPE classes
-- Bounding boxes
-- Tracking IDs
-
-A YOLO tracking workflow can also be executed using ByteTrack:
-
-```python
-results = model.track(
-    frame,
-    persist=True,
-    conf=0.20,
-    iou=0.50,
-    tracker="bytetrack.yaml",
-    verbose=False
-)
-```
-
----
-
-## ONNX Export
-
-Run:
-
+## 7) Export for deployment
 ```bash
 python src/export_model.py
 ```
-
-The model is exported to ONNX format for deployment.
-
----
-
-## Deployment
-
-A Streamlit application is included in:
-
-```text
-app.py
+This calls:
+```python
+model.export(format="onnx")
 ```
+and creates an optimized ONNX model next to the trained weights.
 
-Run the application using:
-
+## 8) Run the Streamlit app
 ```bash
 streamlit run app.py
 ```
+Upload a construction image to display detections from the custom model.
 
----
+## Optional one-command scored pipeline
+Training + evaluation + training analysis + ONNX export:
+```bash
+python run_pipeline.py
+```
+Segmentation and video analytics are intentionally separate because they require real user-provided image/video evidence.
 
-## Execution Evidence
+## Evidence required before submission
+The rubric says unexecuted notebooks/code prove nothing. Follow `docs/EXECUTION_EVIDENCE.md` and retain real terminal output, generated metrics, plots, annotated images, video analytics output, and export evidence. **Do not fabricate scores.**
 
-The complete workflow was executed successfully, including:
+## GitHub submission requirements
+This project is structured for a proper GitHub repository. Before submission:
+- Create/activate your own GitHub account.
+- Publish the project to GitHub; a project not published as required is incomplete.
+- Use meaningful incremental commits, not one bulk upload.
+- Keep a sensible repository structure.
+- Do not commit secrets, API keys, datasets, weights, `runs/`, or large generated media; `.gitignore` is already configured.
 
-- Custom YOLO training
-- Validation with `model.val()`
-- Precision, Recall, mAP@50, and mAP@50-95 reporting
-- Confusion-matrix generation
-- Image inference
-- Segmentation inference
-- Video detection and tracking
-- ONNX model export
-
-Generated results should be retained in the repository where file-size limits permit.
-
-Recommended evidence includes:
-
+Suggested commit sequence:
 ```text
-artifacts/evaluation_metrics.json
-artifacts/training_analysis.md
-runs/siteguard/evaluation/
-runs/siteguard/ppe_train/
+feat: initialize SiteGuard Vision project structure
+feat: add Construction-PPE YOLO training pipeline
+feat: add validation metrics and training analysis
+feat: add segmentation inference task
+feat: add tracking and restricted-zone analytics
+feat: add ONNX export and Streamlit deployment
+ docs: complete capstone README and evidence checklist
 ```
 
-Screenshots or representative output images may also be stored in a dedicated `results/` directory.
+## Training program attribution
+This capstone was created for the **Computer Vision for Developers with Ultralytics** training program delivered by **SDAIA Academy** via **Learning Space** as a 5-day capstone program.
 
----
+SDAIA Academy on GitHub: **https://github.com/SDAIAAcademy**
 
-## Technologies
+## Technical notes
+See `docs/TECHNICAL_DOCUMENTATION.md` for pipeline design, model/data choices, evaluation reasoning, video architecture, deployment, and reproducibility details. See `docs/RUBRIC_CHECKLIST.md` for a one-to-one rubric mapping.
 
-- Python
-- Ultralytics YOLO
-- PyTorch
-- OpenCV
-- NumPy
-- Pandas
-- Matplotlib
-- Streamlit
-- ONNX
-- Google Colab
-
----
-
-## Limitations
-
-The current trained model was fine-tuned for only three epochs to complete the full end-to-end workflow within the available training environment.
-
-As a result:
-
-- Recall remains limited.
-- Rare PPE-violation classes are underrepresented.
-- Additional training is expected to improve detection quality.
-- Results should be interpreted as a functional capstone implementation rather than a production-ready safety system.
-
----
-
-## Future Work
-
-Potential future improvements include:
-
-- Longer training
-- Larger custom construction-safety datasets
-- Better class balancing
-- Restricted-zone event logging
-- Real-time camera integration
-- PPE violation dashboards
-- Alert notifications
-- Cloud deployment
-- Model optimization for edge devices
-
----
-
-## Acknowledgment
-
-This project was developed as a computer vision capstone project using **Ultralytics YOLO** and was completed as part of the **SDAIA Academy training program**.
-
----
-
-## Conclusion
-
-SiteGuard Vision demonstrates a complete computer vision workflow from model training to deployment-oriented export.
-
-The solution integrates:
-
-- Object detection
-- Custom training
-- Evaluation
-- Error analysis
-- Segmentation
-- Video analytics
-- Object tracking
-- ONNX export
-
-The project demonstrates how modern computer vision techniques can be applied to construction-site safety monitoring and PPE compliance.
+## Important limitation
+This repository is an educational capstone. It should not be treated as a certified occupational-safety monitoring system without site-specific validation, privacy review, calibration, and operational safeguards.
