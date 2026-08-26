@@ -10,7 +10,7 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser()
     p.add_argument("--model", default="yolo26n.pt")
     p.add_argument("--data", default="construction-ppe.yaml")
-    p.add_argument("--epochs", type=int, default=50)
+    p.add_argument("--epochs", type=int, default=3)
     p.add_argument("--imgsz", type=int, default=640)
     p.add_argument("--batch", type=int, default=16)
     p.add_argument("--patience", type=int, default=12)
