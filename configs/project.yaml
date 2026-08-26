@@ -1,1 +1,30 @@
-
+project_name: SiteGuard Vision
+base_model: yolo26n.pt
+segmentation_model: yolo26n-seg.pt
+dataset: construction-ppe.yaml
+training:
+  epochs: 50
+  imgsz: 640
+  batch: 16
+  patience: 12
+  seed: 42
+  project: runs/siteguard
+  name: ppe_train
+inference:
+  conf: 0.35
+  iou: 0.50
+tracking:
+  tracker: bytetrack.yaml
+  conf: 0.35
+  iou: 0.50
+  classes_of_interest:
+    - helmet
+    - gloves
+    - vest
+    - boots
+    - goggles
+    - Person
+    - no_helmet
+    - no_goggle
+    - no_gloves
+    - no_boots
