@@ -1,37 +1,40 @@
-# SiteGuard Vision — Technical Documentation
+## Training Analysis
 
-## 1. Problem and scope
-SiteGuard Vision is an end-to-end construction-safety computer-vision system. It fine-tunes an Ultralytics YOLO detector on a real PPE dataset, validates the trained model, runs image inference, performs instance segmentation as a second vision task, tracks people/PPE in video, measures entries into a restricted work zone, flags missing-PPE detections inside that zone, and exports the trained detector to ONNX.
+The model was trained on the Construction-PPE dataset for 3 epochs using pretrained YOLO weights.
 
-## 2. Models and tasks
-- **Custom object detection:** `yolo26n.pt` fine-tuned on `construction-ppe.yaml`.
-- **Instance segmentation (task beyond detection):** `yolo26n-seg.pt` through `model.predict()`.
-- **Video tracking:** custom `best.pt` through `model.track(..., persist=True, tracker="bytetrack.yaml")`.
-- **Deployment:** custom `best.pt` through `model.export(format="onnx")` and a Streamlit app.
+Training summary:
 
-## 3. Dataset
-Ultralytics Construction-PPE is a real construction-site detection dataset with 1,416 images and 11 classes: helmet, gloves, vest, boots, goggles, none, Person, no_helmet, no_goggle, no_gloves, no_boots. The published split is 1,132 training, 143 validation, and 141 test images. Ultralytics can download it automatically when `construction-ppe.yaml` is used.
+- Best validation mAP@50-95 epoch: 3
+- Best validation mAP@50-95: 0.12953
+- Final validation mAP@50-95: 0.12953
+- Final training box loss: 1.74261
+- Final validation box loss: 1.73273
 
-Source: Ultralytics Construction-PPE documentation. Original dataset attribution should be retained when redistributing data. The repository deliberately excludes datasets from Git through `.gitignore`.
+The training and validation box losses remained close during the training run. This does not show a clear sign of overfitting.
 
-## 4. Training design
-Default run: 50 epochs, 640px image size, batch 16, pretrained nano detector, patience 12, fixed seed 42. This is intentionally a genuine fine-tuning run on Construction-PPE rather than COCO8. The training call enables plots and saves `results.csv`, curves, labels, validation predictions, `last.pt`, and `best.pt` under `runs/siteguard/ppe_train/`.
+However, the training duration was short, so the model likely did not reach full convergence. The current results are more consistent with under-training than overfitting.
 
-`src/analyze_training.py` reads the real `results.csv` after training and writes `artifacts/training_analysis.md` so the over/underfitting discussion is based on what actually happened rather than fabricated metrics.
+## Evaluation Results
 
-## 5. Evaluation
-`src/evaluate.py` invokes `model.val()` on the validation split, stores mAP50, mAP50-95, mean precision, mean recall, confidence threshold, and IoU threshold in `artifacts/evaluation_metrics.json`, and asks Ultralytics to create evaluation plots. For this safety-oriented use case, `conf=0.35` is a recall-favoring starting point. A false negative can fail to flag an unsafe worker; too-low confidence can create false alarms. Use the PR/F1 curves and confusion matrix to tune the final threshold.
+The trained model was evaluated using Ultralytics `model.val()`.
 
-## 6. Real-world video pipeline
-`src/video_analytics.py` uses OpenCV capture -> per-frame YOLO tracking -> zone analytics -> annotation -> encoded output video. A central polygon represents a restricted work zone. Persistent Person track IDs are used to count unique entries. Missing-PPE classes inside the zone generate visible alerts and are accumulated in a JSON summary.
+- Precision: 0.3470
+- Recall: 0.1354
+- mAP@50: 0.1138
+- mAP@50-95: 0.0585
 
-Pipeline: `Video/Webcam -> OpenCV -> YOLO track -> ByteTrack IDs -> polygon test -> violation logic -> annotated MP4 + JSON`.
+The model performed better on common classes such as Person, helmet, gloves, and vest.
 
-## 7. Deployment
-`src/export_model.py` exports `best.pt` to ONNX with `model.export(format="onnx")`. `app.py` is a small Streamlit interface that accepts an uploaded image and displays custom PPE predictions.
+Performance was weaker on rare classes such as no_boots, no_gloves, no_goggle, and no_helmet.
 
-## 8. Reproducibility and configuration
-- Python dependencies are pinned by minimum versions in `requirements.txt`.
-- Training seed is 42 and deterministic training is requested.
-- Model weights, datasets, generated runs, API keys/secrets, and large videos are excluded by `.gitignore`.
-- Project defaults are summarized in `configs/project.yaml`.
+The lower performance on rare classes is likely related to class imbalance and the short training run.
+
+## Video Analytics
+
+The video pipeline uses YOLO and OpenCV to process video frames.
+
+The system performs object detection and tracking and displays bounding boxes, class labels, and persistent tracking IDs.
+
+## Model Export
+
+The trained model was exported to ONNX format to support deployment and interoperability.
