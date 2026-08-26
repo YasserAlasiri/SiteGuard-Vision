@@ -1,6 +1,8 @@
 # SiteGuard Vision  
 ## Construction PPE Compliance & Restricted-Zone Analytics
 
+Student name: MOHAMMED ABDULLAH ALHAMMADI , YASSER AHMED ALASSIRI , Faisal Saleh BinBaz , Asaad Jamal Maqbool , SAAD MOHAMMED ALHOSAN
+
 SiteGuard Vision is a computer vision solution built with **Ultralytics YOLO** to support construction-site safety monitoring.
 
 The system detects workers and personal protective equipment (PPE), analyzes video streams, tracks detected objects, and supports safety-oriented monitoring such as PPE compliance and restricted-zone awareness.
